@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <string>
 #include <cctype>
+#include <cstring>
 
 using namespace std;
 
@@ -21,7 +22,7 @@ void DLL_EXPORT sortStr(char* a)
         }
     }
 
-    strcpy_s(a, c.length() + 1, c.c_str());
+    strcpy(a, c.c_str());
 }
 
 int DLL_EXPORT calculateSum(const char* a)
@@ -43,20 +44,4 @@ bool DLL_EXPORT analyzeLength(const char* a)
 
     int b = strlen(a);
     return (b > 2 && b % 32 == 0);
-}
-
-BOOL APIENTRY DllMain(HINSTANCE a, DWORD b, LPVOID c)
-{
-    switch (b)
-    {
-        case DLL_PROCESS_ATTACH:
-            break;
-        case DLL_PROCESS_DETACH:
-            break;
-        case DLL_THREAD_ATTACH:
-            break;
-        case DLL_THREAD_DETACH:
-            break;
-    }
-    return TRUE;
 }

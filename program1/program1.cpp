@@ -1,11 +1,16 @@
 #include <iostream>
+#include <cstring>
 #include <string>
 #include <thread>
 #include <mutex>
 #include <queue>
 #include <cctype>
 #include <algorithm>
-#include <windows.h>
+#include <condition_variable>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "../strlib/strlib.h"
 
 using namespace std;
@@ -16,8 +21,7 @@ condition_variable c;
 bool d = true;
 
 int main() {
-    SetConsoleCP(1251);
-    SetConsoleOutputCP(1251);
+    mkfifo("/tmp/DataPipe", 0666);
 
     thread e([&]() {
         string f;
@@ -34,10 +38,12 @@ int main() {
                 continue;
             }
             char* g = new char[65];
-            strcpy_s(g, 65, f.c_str());
+            strcpy(g, f.c_str());
             sortStr(g);
-            lock_guard<mutex> h(b);
-            a.push(g);
+            {
+                lock_guard<mutex> h(b);
+                a.push(g);
+            }
             c.notify_one();
             delete[] g;
         }
@@ -57,27 +63,19 @@ int main() {
             int k = calculateSum(j.c_str());
             cout << "Summa: " << k << endl;
 
-            HANDLE l = CreateFile(
-                "\\\\.\\pipe\\DataPipe",
-                GENERIC_WRITE,
-                0,
-                NULL,
-                OPEN_EXISTING,
-                0,
-                NULL
-            );
-
-            if (l != INVALID_HANDLE_VALUE) {
-                string m = j + "|" + to_string(k);
-                DWORD n;
-                WriteFile(l, m.c_str(), m.length() + 1, &n, NULL);
-                CloseHandle(l);
+            int l = open("/tmp/DataPipe", O_WRONLY);
+            if (l != -1) {
+                string m = j + "|" + to_string(k) + "\n";
+                write(l, m.c_str(), m.length());
+                close(l);
             }
         }
     });
 
     e.join();
     i.join();
+
+    unlink("/tmp/DataPipe");
 
     return 0;
 }

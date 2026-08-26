@@ -1,5 +1,5 @@
 all:
-	clang -shared -o strlib.dll strlib.cpp -DBUILD_DLL -luser32
-
+	g++ -shared -fPIC -o libstrlib.so strlib.cpp
+ 
 clean:
-	del *.dll
+	rm -f libstrlib.so

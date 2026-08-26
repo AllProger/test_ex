@@ -1,5 +1,5 @@
 all:
-	clang++ -o Program2.exe Program2.cpp -I../strlib -L../strlib -lstrlib
+	g++ -o program2 program2.cpp -I../strlib -L../strlib -lstrlib
 
 clean:
-	del *.exe
+	rm -f program2

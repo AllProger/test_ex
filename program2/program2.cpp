@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
-#include <windows.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <cstring>
 #include "../strlib/strlib.h"
 
 using namespace std;
@@ -8,37 +12,23 @@ using namespace std;
 int main() {
     cout << "Program2 started, waiting for data...\n";
 
-    HANDLE a = CreateNamedPipe(
-        "\\\\.\\pipe\\DataPipe",
-        PIPE_ACCESS_INBOUND,
-        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-        1,
-        1024,
-        1024,
-        0,
-        NULL
-    );
-
-    if (a == INVALID_HANDLE_VALUE) {
-        cout << "Pipe creation failed: " << GetLastError() << endl;
-        return 1;
-    }
+    mkfifo("/tmp/DataPipe", 0666);
 
     while (true) {
         cout << "Waiting for connection...\n";
 
-        BOOL connected = ConnectNamedPipe(a, NULL);
-        if (!connected && GetLastError() != ERROR_PIPE_CONNECTED) {
-            cout << "Connection error: " << GetLastError() << endl;
+        int a = open("/tmp/DataPipe", O_RDONLY);
+        if (a == -1) {
+            cout << "Pipe opening failed" << endl;
             continue;
         }
 
         cout << "Client connected!\n";
 
         char b[1024] = {0};
-        DWORD c;
+        ssize_t c = read(a, b, sizeof(b) - 1);
 
-        if (ReadFile(a, b, sizeof(b) - 1, &c, NULL) && c > 0) {
+        if (c > 0) {
             string d(b);
             cout << "Received raw: " << d << endl;
 
@@ -59,10 +49,10 @@ int main() {
             cout << "Read error or no data\n";
         }
 
-        DisconnectNamedPipe(a);
+        close(a);
         cout << "Disconnected, waiting for next...\n\n";
     }
 
-    CloseHandle(a);
+    unlink("/tmp/DataPipe");
     return 0;
 }
